@@ -65,9 +65,6 @@ export default function DashboardOwner() {
     try {
       const res = await fetch(`${API_URL}/predict`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
       });
       const result = await res.json();
       setPrediction(result.prediction);

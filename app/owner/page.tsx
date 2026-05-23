@@ -6,9 +6,13 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
 
+type SalesData = {
+  daily_revenue: number
+  sales_date: string
+}
 
 export default function DashboardOwner() {
-  const [dataSales, setDataSales] = useState<any[]>([]);
+  const [dataSales, setDataSales] = useState<SalesData[]>([]);
   const [loading, setLoading] = useState(true);
   const [prediction, setPrediction] = useState<number | null>(null);
   const [activeBar, setActiveBar] = useState<number | null>(null);

@@ -37,11 +37,14 @@ export default function DashboardOwner() {
       if (sales) setDataSales(sales);
 
       // 2. Tembak API Python buat dapet Prediksi Real
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       try {
-        const res = await fetch('http://localhost:8000/predict', {
+          const res = await fetch(`${API_URL}/predict`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
         const result = await res.json();
         setPrediction(result.prediction);
       } catch (error) {

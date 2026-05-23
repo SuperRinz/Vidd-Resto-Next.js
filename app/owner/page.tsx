@@ -16,6 +16,7 @@ export default function DashboardOwner() {
   const [loading, setLoading] = useState(true);
   const [prediction, setPrediction] = useState<number | null>(null);
   const [activeBar, setActiveBar] = useState<number | null>(null);
+  const [totalOmzetLocal, setTotalOmzetLocal] = useState<number>(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -29,39 +30,56 @@ export default function DashboardOwner() {
   }, [router]);
 
   
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      // 1. Ambil data Omzet Harian asli dari Supabase[cite: 2]
-      const { data: sales } = await supabase
-        .from('ml_ready_v3')
-        .select('sales_date, daily_revenue')
-        .order('sales_date', { ascending: true });
-      
-      if (sales) setDataSales(sales as SalesData[]);
-
-      // 2. Tembak API Python buat dapet Prediksi Real
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      try {
-          const res = await fetch(`${API_URL}/predict`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        })
-        const result = await res.json();
-        setPrediction(result.prediction);
-      } catch (error) {
-        console.error("Gagal konek ke API Python:", error);
-      }
-
+ useEffect(() => {
+  const fetchData = async () => {
+    setLoading(true);
+    
+    // 1. Ambil data Omzet Harian asli dari Supabase
+    const { data: sales, error } = await supabase
+      .from('ml_ready_v3')
+      .select('*')
+      .order('sales_date', { ascending: true });
+    
+    if (error) {
+      console.error("Error ambil data Supabase:", error);
       setLoading(false);
-    };
-    fetchData();
-  }, []);
+      return;
+    }
 
+    // --- TRIK JURUS BARU DI SINI ---
+    // Kita buat variabel lokal baru dan tegasin kalau ini adalah array dari SalesData
+    const validatedSales: SalesData[] = (sales || []).map((item: any) => ({
+      daily_revenue: Number(item.daily_revenue) || 0,
+      sales_date: String(item.sales_date) || ""
+    }));
 
-    const totalOmzet = (dataSales as SalesData[]).reduce((sum: number, item: SalesData) => sum + item.daily_revenue, 0);
+    // Masukkan data yang udah bersih dan tervalidasi ke State
+    setDataSales(validatedSales);
+
+    // Langsung hitung total omzet dari variabel lokal yang sudah DIJAMIN bertipe SalesData[]
+    const total = validatedSales.reduce((sum, current) => sum + current.daily_revenue, 0);
+    setTotalOmzetLocal(total); // <-- Kita simpan ke state baru aja biar ga ribet
+
+    // 2. Tembak API Python buat dapet Prediksi Real
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    try {
+      const res = await fetch(`${API_URL}/predict`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      const result = await res.json();
+      setPrediction(result.prediction);
+    } catch (error) {
+      console.error("Gagal konek ke API Python:", error);
+    }
+
+    setLoading(false);
+  };
+  
+  fetchData();
+}, []);
 
   const formatYAxis = (val: number) => {
     if (val === 0) return '0';
@@ -97,7 +115,7 @@ export default function DashboardOwner() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-blue-500">
           <p className="text-sm text-gray-500 font-medium mb-1">Total Omzet</p>
-          <h2 className="text-2xl font-bold text-gray-800">Rp {totalOmzet.toLocaleString()}</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Rp {totalOmzetLocal.toLocaleString()}</h2>
         </div>
 
         <div className="bg-cyan-600 p-6 rounded-2xl shadow-sm text-white">

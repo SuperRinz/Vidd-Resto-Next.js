@@ -60,10 +60,8 @@ export default function DashboardOwner() {
     fetchData();
   }, []);
 
-const totalOmzet = dataSales.reduce<number>(
-  (sum, item: SalesData) => sum + item.daily_revenue,
-  0
-);
+
+    const totalOmzet = (dataSales as SalesData[]).reduce((sum: number, item: SalesData) => sum + item.daily_revenue, 0);
 
   const formatYAxis = (val: number) => {
     if (val === 0) return '0';

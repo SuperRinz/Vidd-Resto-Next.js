@@ -35,10 +35,10 @@ export default function DashboardOwner() {
       // 1. Ambil data Omzet Harian asli dari Supabase[cite: 2]
       const { data: sales } = await supabase
         .from('ml_ready_v3')
-        .select('*')
+        .select('sales_date, daily_revenue')
         .order('sales_date', { ascending: true });
       
-      if (sales) setDataSales(sales);
+      if (sales) setDataSales(sales as SalesData[]);
 
       // 2. Tembak API Python buat dapet Prediksi Real
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';

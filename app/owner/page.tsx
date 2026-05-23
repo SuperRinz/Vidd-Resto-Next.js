@@ -60,8 +60,8 @@ export default function DashboardOwner() {
     fetchData();
   }, []);
 
-  const totalOmzet = dataSales.reduce<number>(
-  (sum, item) => sum + item.daily_revenue,
+const totalOmzet = dataSales.reduce<number>(
+  (sum, item: SalesData) => sum + item.daily_revenue,
   0
 );
 

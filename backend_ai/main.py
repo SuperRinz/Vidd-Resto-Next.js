@@ -52,7 +52,7 @@ app = FastAPI(lifespan=lifespan)
 # Catatan CORS: Pas deploy nanti, http://localhost:3000 ini diganti URL Vercel lu ya!
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://vidd-resto-next-js.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

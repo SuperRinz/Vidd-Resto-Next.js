@@ -1,55 +1,65 @@
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
 import os
+import base64
+import requests
 
 def send_weekly_report(target_email, file_path):
-    # Konfigurasi Akun (Taruh di .env lu!)
-    sender_email = "leviathan.xv.09@gmail.com"
-    app_password = "ymunzjwqwsrmbfzm" # Password 16 digit tadi
-
-    # 1. Setup Pesan
-    msg = MIMEMultipart()
-    msg['From'] = sender_email
-    msg['To'] = target_email
-    msg['Subject'] = "📊 Laporan Mingguan Vidd-Resto AI"
-
-    body = """
-    Selamat Malam Owner,
+    # Ambil API Key dari Environment Variable Railway
+    resend_api_key = os.getenv("RESEND_API_KEY")
     
-    Terlampir laporan penjualan resto Anda untuk minggu ini. 
-    AI kami telah menganalisis tren penjualan dan memberikan saran stok untuk minggu depan.
+    if not resend_api_key:
+        print("Error: RESEND_API_KEY belum dipasang di env Railway!")
+        return
+
+    # 1. Validasi File PDF
+    if not os.path.exists(file_path):
+        print(f"Error: File report {file_path} tidak ditemukan!")
+        return
     
-    Terima Kasih,
-    Vidd-Resto AI Team
-    """
-    msg.attach(MIMEText(body, 'plain'))
+    nama_file = "Laporan_resto.pdf"
+    file_path = os.path.join(os.getcwd(), nama_file) # Pastikan path dinamis sesuai lokasi server cloud/lokal
 
-    # 2. Lampirkan PDF
-    # Menggunakan os.path biar jalannya dinamis di server cloud maupun lokal
-    nama_file_pdf = "Laporan_resto.pdf"
-    path_file_saat_ini = os.path.join(os.getcwd(), nama_file_pdf)
+    # 2. Convert PDF ke Base64 (Syarat mutlak kirim attachment via API)
+    with open(file_path, "rb") as pdf_file:
+        encoded_pdf = base64.b64encode(pdf_file.read()).decode("utf-8")
 
-    with open(path_file_saat_ini, "rb") as attachment:
-        part = MIMEBase('application', 'octet-stream')
-        part.set_payload(attachment.read())
-        encoders.encode_base64(part)
-        part.add_header('Content-Disposition', f"attachment; filename= {nama_file_pdf}")
-        msg.attach(part)
+    # 3. Struktur Konten Email
+    payload = {
+        "from": "Vidd-Resto AI <onboarding@resend.dev>", # Sender sandbox default Resend
+        "to": [target_email],
+        "subject": "📊 Laporan Mingguan Vidd-Resto AI",
+        "html": """
+        <h3>Selamat Malam Owner,</h3>
+        <p>Terlampir laporan penjualan resto Anda untuk minggu ini.</p>
+        <p>AI kami telah menganalisis tren penjualan dan memberikan saran stok untuk minggu depan.</p>
+        <br>
+        <p>Terima Kasih,<br><strong>Vidd-Resto AI Team</strong></p>
+        """,
+        "attachments": [
+            {
+                "content": encoded_pdf,
+                "filename": nama_file,
+            }
+        ]
+    }
 
-    # 3. Kirim lewat server Gmail
+    headers = {
+        "Authorization": f"Bearer {resend_api_key}",
+        "Content-Type": "application/json"
+    }
+
+    # 4. Tembak lewat jalur HTTP API (Port 443 - Dijamin lolos gembok cloud!)
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 465)
-        server.starttls()
-        server.login(sender_email, app_password)
-        server.send_message(msg)
-        server.quit()
-        print(f"Laporan berhasil dikirim ke {target_email}!")
+        url = "https://api.resend.com/emails"
+        response = requests.post(url, json=payload, headers=headers)
+        
+        if response.status_code in [200, 201]:
+            print(f"Laporan sukses dikirim via HTTP API ke {target_email}!")
+        else:
+            print(f"Gagal kirim via Resend API: {response.status_code} - {response.text}")
+            
     except Exception as e:
-        print(f"Gagal kirim email: {e}")
+        print(f"Gagal koneksi ke server Resend API: {e}")
 
 if __name__ == "__main__":
-    # Test kirim ke email lu sendiri
-    send_weekly_report("davidabdie09@gmail.com", "vidd_resto_weekly_report.pdf")
+    # Test lokal
+    send_weekly_report("davidabdie09@gmail.com", "laporan_resto.pdf")

@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     scheduler = BackgroundScheduler(timezone=jkt)
     
     # Jadwal lu: Senin jam 19:30 WIB
-    scheduler.add_job(job_mingguan, 'cron', day_of_week='sat', hour=19, minute=30)
+    scheduler.add_job(job_mingguan, 'cron', day_of_week='sun', hour=19, minute=30)
     scheduler.start()
     print("🚀 AUTOMATION READY: Scheduler aktif di background server!")
     

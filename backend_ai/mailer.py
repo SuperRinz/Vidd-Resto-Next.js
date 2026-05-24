@@ -28,7 +28,7 @@ def send_weekly_report(target_email, file_path):
     msg.attach(MIMEText(body, 'plain'))
 
     # 2. Lampirkan PDF
-# Menggunakan os.path biar jalannya dinamis di server cloud maupun lokal
+    # Menggunakan os.path biar jalannya dinamis di server cloud maupun lokal
     nama_file_pdf = "Laporan_resto.pdf"
     path_file_saat_ini = os.path.join(os.getcwd(), nama_file_pdf)
 
@@ -41,7 +41,7 @@ def send_weekly_report(target_email, file_path):
 
     # 3. Kirim lewat server Gmail
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server = smtplib.SMTP('smtp.gmail.com', 465)
         server.starttls()
         server.login(sender_email, app_password)
         server.send_message(msg)

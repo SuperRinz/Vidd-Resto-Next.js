@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     scheduler = BackgroundScheduler(timezone=jkt)
     
     # Jadwal lu: Senin jam 19:30 WIB
-    scheduler.add_job(job_mingguan, 'cron', day_of_week='sun', hour=19, minute=55)
+    scheduler.add_job(job_mingguan, 'cron', day_of_week='sun', hour=19, minute=59)
     scheduler.start()
     print("🚀 AUTOMATION READY: Scheduler aktif di background server!")
     
@@ -102,3 +102,17 @@ async def chat_endpoint(data: dict):
     message = data.get("message")
     ai_response = tanya_vidd_bot(message)
     return {"response": ai_response}
+
+@app.get("/test-kirim-email")
+async def test_email():
+    print("Memicu test kirim email manual...")
+    from generator import generate_pdf_report
+    from mailer import send_weekly_report
+    
+    try:
+        pdf_file = generate_pdf_report()
+        # Tembak langsung fungsinya
+        send_weekly_report("davidabdie09@gmail.com", pdf_file)
+        return {"status": "Fungsi selesai dijalankan, cek log Railway & Resend lu!"}
+    except Exception as e:
+        return {"status": "Crash keras!", "error": str(e)}
